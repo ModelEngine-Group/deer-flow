@@ -11,7 +11,7 @@ from langchain_deepseek import ChatDeepSeek
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import AzureChatOpenAI, ChatOpenAI
 
-from src.config import load_yaml_config
+from src.config import load_yaml_config, load_datamate_model_config
 from src.config.agents import LLMType
 from src.llms.providers.dashscope import ChatDashscope
 
@@ -70,6 +70,9 @@ def _create_llm_use_conf(llm_type: LLMType, conf: Dict[str, Any]) -> BaseChatMod
     # Remove unnecessary parameters when initializing the client
     if "token_limit" in merged_conf:
         merged_conf.pop("token_limit")
+
+    if not merged_conf and config_key == "BASIC_MODEL":
+        merged_conf.update(load_datamate_model_config())
 
     if not merged_conf:
         raise ValueError(f"No configuration found for LLM type: {llm_type}")
@@ -164,6 +167,9 @@ def get_configured_llm_models() -> dict[str, list[str]]:
 
             # Merge configurations, with environment variables taking precedence
             merged_conf = {**yaml_conf, **env_conf}
+
+            if not merged_conf and config_key == "BASIC_MODEL":
+                merged_conf.update(load_datamate_model_config())
 
             # Check if model is configured
             model_name = merged_conf.get("model")

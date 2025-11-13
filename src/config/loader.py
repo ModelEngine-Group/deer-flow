@@ -4,6 +4,7 @@
 import os
 from typing import Any, Dict
 
+import requests
 import yaml
 
 
@@ -76,3 +77,20 @@ def load_yaml_config(file_path: str) -> Dict[str, Any]:
     # 将处理后的配置存入缓存
     _config_cache[file_path] = processed_config
     return processed_config
+
+
+def load_datamate_model_config():
+    conf = {}
+    datamate_backend_url = get_str_env("DATAMATE_BACKEND_URL", 'http://datamate-backend:8080')
+    data = {
+        'type': 'CHAT',
+        'isDefault': True,
+    }
+    response = requests.get(datamate_backend_url + '/api/models/list', params=data)
+    if response.status_code == 200:
+        content = response.json().get("data", {}).get("content", [])
+        if len(content) != 0:
+            conf["model"] = content[0].get('modelName')
+            conf["base_url"] = content[0].get('baseUrl')
+            conf["api_key"] = content[0].get('apiKey')
+    return conf

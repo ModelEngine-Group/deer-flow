@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
+import requests
 from langchain_milvus.vectorstores import Milvus as LangchainMilvus
 from langchain_openai import OpenAIEmbeddings
 from openai import OpenAI
@@ -89,8 +90,22 @@ class MilvusRetriever(Retriever):
         self.embedding_model = get_str_env("MILVUS_EMBEDDING_MODEL")
         self.embedding_api_key = get_str_env("MILVUS_EMBEDDING_API_KEY")
         self.embedding_base_url = get_str_env("MILVUS_EMBEDDING_BASE_URL")
-        self.embedding_dim: int = self._get_embedding_dimension(self.embedding_model)
         self.embedding_provider = get_str_env("MILVUS_EMBEDDING_PROVIDER", "openai")
+        if not self.embedding_model:
+            self.datamate_backend_url = get_str_env("DATAMATE_BACKEND_URL", 'http://datamate-backend:8080')
+            data = {
+                'type': 'EMBEDDING',
+                'isDefault': True,
+            }
+            response = requests.get(self.datamate_backend_url + '/api/models/list', params=data)
+            if response.status_code == 200:
+                content = response.json().get("data", {}).get("content", [])
+                if len(content) != 0:
+                    self.embedding_model = content[0].get('modelName')
+                    self.embedding_base_url = content[0].get('baseUrl')
+                    self.embedding_api_key = content[0].get('apiKey')
+                    self.embedding_provider = 'dashscope' if content[0].get('provider') == '阿里云百炼' else 'openai'
+        self.embedding_dim: int = self._get_embedding_dimension(self.embedding_model)
 
         # --- Examples / auto-load configuration ---
         self.auto_load_examples: bool = get_bool_env("MILVUS_AUTO_LOAD_EXAMPLES", True)

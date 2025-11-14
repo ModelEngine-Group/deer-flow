@@ -14,10 +14,20 @@ import sys
 
 import uvicorn
 
+file_handler = logging.FileHandler("/var/log/deer-flow/backend.log")
+file_handler.setLevel(logging.INFO)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.WARNING)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        file_handler,  # 保存到指定文件
+        console_handler  # 输出到控制台
+    ]
 )
 
 logger = logging.getLogger(__name__)
@@ -82,14 +92,15 @@ if __name__ == "__main__":
     try:
         logger.info(f"Starting DeerFlow API server on {args.host}:{args.port}")
         logger.info(f"Log level: {args.log_level.upper()}")
-        
+
         # Set the appropriate logging level for the src package if debug is enabled
         if args.log_level.lower() == "debug":
             logging.getLogger("src").setLevel(logging.DEBUG)
             logging.getLogger("langchain").setLevel(logging.DEBUG)
             logging.getLogger("langgraph").setLevel(logging.DEBUG)
-            logger.info("DEBUG logging enabled for src, langchain, and langgraph packages - detailed diagnostic information will be logged")
-        
+            logger.info(
+                "DEBUG logging enabled for src, langchain, and langgraph packages - detailed diagnostic information will be logged")
+
         uvicorn.run(
             "src.server:app",
             host=args.host,

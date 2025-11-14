@@ -4,7 +4,10 @@
 import enum
 import os
 
+import requests
 from dotenv import load_dotenv
+
+from src.config.loader import get_str_env
 
 load_dotenv()
 
@@ -18,8 +21,27 @@ class SearchEngine(enum.Enum):
     WIKIPEDIA = "wikipedia"
 
 
-# Tool configuration
-SELECTED_SEARCH_ENGINE = os.getenv("SEARCH_API", SearchEngine.TAVILY.value)
+def get_search_engine():
+    search_engine = os.getenv("SEARCH_API")
+
+    datamate_backend_url = get_str_env("DATAMATE_BACKEND_URL", "http://datamate-backend:8080")
+    response = requests.get(datamate_backend_url + "/api/sys-param/list")
+    if response.status_code == 200:
+        content = response.json().get("data", [])
+        sys_param = {}
+        for c in content:
+            sys_param[c.get("paramKey")] = c.get("paramValue")
+        if "SEARCH_API" in sys_param:
+            search_engine = sys_param.get("SEARCH_API")
+            if search_engine == SearchEngine.TAVILY.value:
+                os.environ["TAVILY_API_KEY"] = sys_param.get("TAVILY_API_KEY")
+            elif search_engine == SearchEngine.BRAVE_SEARCH.value:
+                os.environ["BRAVE_SEARCH_API_KEY"] = sys_param.get("BRAVE_SEARCH_API_KEY")
+            elif search_engine == SearchEngine.SEARX.value:
+                os.environ["SEARX_HOST"] = sys_param.get("SEARX_HOST")
+        if "JINA_API_KEY" in sys_param:
+            os.environ["JINA_API_KEY"] = sys_param.get("JINA_API_KEY")
+    return search_engine
 
 
 class RAGProvider(enum.Enum):

@@ -29,7 +29,7 @@ from src.tools.search import LoggedTavilySearch
 from src.utils.context_manager import ContextManager, validate_message_content
 from src.utils.json_utils import repair_json_output, sanitize_tool_response
 
-from ..config import SELECTED_SEARCH_ENGINE, SearchEngine
+from ..config import SearchEngine, get_search_engine
 from .types import State
 from .utils import (
     build_clarified_topic_from_history,
@@ -184,7 +184,8 @@ def background_investigation_node(state: State, config: RunnableConfig):
     configurable = Configuration.from_runnable_config(config)
     query = state.get("clarified_research_topic") or state.get("research_topic")
     background_investigation_results = []
-    
+
+    SELECTED_SEARCH_ENGINE = get_search_engine()
     if SELECTED_SEARCH_ENGINE == SearchEngine.TAVILY.value:
         searched_content = LoggedTavilySearch(
             max_results=configurable.max_search_results

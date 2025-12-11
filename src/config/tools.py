@@ -30,7 +30,7 @@ def get_search_engine():
         content = response.json().get("data", [])
         sys_param = {}
         for c in content:
-            sys_param[c.get("paramKey")] = c.get("paramValue")
+            sys_param[c.get("id")] = c.get("paramValue")
         if "SEARCH_API" in sys_param:
             search_engine = sys_param.get("SEARCH_API")
             if search_engine == SearchEngine.TAVILY.value:

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 import requests
+from langchain_milvus import BM25BuiltInFunction
 from langchain_milvus.vectorstores import Milvus as LangchainMilvus
 from langchain_openai import OpenAIEmbeddings
 from openai import OpenAI
@@ -126,7 +127,6 @@ class MilvusRetriever(Retriever):
             "model": self.embedding_model,
             "base_url": self.embedding_base_url,
             "encoding_format": "float",
-            "dimensions": self.embedding_dim,
         }
         if self.embedding_provider.lower() == "openai":
             self.embedding_model = OpenAIEmbeddings(**kwargs)
@@ -436,6 +436,7 @@ class MilvusRetriever(Retriever):
                     embedding_function=self.embedding_model,
                     collection_name=collection_name,
                     connection_args=connection_args,
+                    builtin_function=BM25BuiltInFunction(),
                     # optional (if collection already exists with different schema, be careful)
                     drop_old=False,
                 )
